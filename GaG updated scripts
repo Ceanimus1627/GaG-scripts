@@ -1,0 +1,17 @@
+-- Combined Script: Your Script + Speed Hub
+
+-- Load your custom script from Pastefy
+local success1, err1 = pcall(function()
+    loadstring(game:HttpGet("https://pastefy.app/TytbwluX/raw", true))()
+end)
+if not success1 then
+    warn("[ERROR] Failed to load your script from Pastefy:", err1)
+end
+
+-- Load Speed Hub
+local success2, err2 = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua", true))()
+end)
+if not success2 then
+    warn("[ERROR] Failed to load Speed Hub:", err2)
+end
