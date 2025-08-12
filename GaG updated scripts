@@ -1,6 +1,22 @@
--- Combined Script: Your Script + Limit Hub
+-- Simple Loading Screen
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(1, 0, 1, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 
--- Load your custom script (Pastefy or GitHub)
+local text = Instance.new("TextLabel", frame)
+text.Size = UDim2.new(1, 0, 1, 0)
+text.BackgroundTransparency = 1
+text.TextColor3 = Color3.fromRGB(255, 255, 255)
+text.TextScaled = true
+text.Text = "Loading... Please wait 20 seconds"
+
+task.wait(20) -- 20-second delay
+
+gui:Destroy()
+
+-- Your first script
 local success1, err1 = pcall(function()
     loadstring(game:HttpGet("https://pastefy.app/TytbwluX/raw", true))()
 end)
@@ -8,7 +24,7 @@ if not success1 then
     warn("[ERROR] Failed to load your script:", err1)
 end
 
--- Load Limit Hub
+-- Your second script (Limit Hub)
 local success2, err2 = pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Loader.lua", true))()
 end)
