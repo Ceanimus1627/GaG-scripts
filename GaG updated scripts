@@ -1,240 +1,83 @@
--- Loader.lua
--- 20s unskippable loading screen (styled), disables controls, then loads your GaG script
-
+-- GaG Script with 20s Loading Screen
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local ContextActionService = game:GetService("ContextActionService")
-local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
-local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local LocalPlayer = Players.LocalPlayer
-if not LocalPlayer then return end
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local LOADING_TIME = 20 -- seconds
-
--- Utility to block inputs
-local function blockInputs()
-    -- Bind actions that eat input
-    local function eatAction() return Enum.ContextActionResult.Sink end
-    ContextActionService:BindAction("BLOCK_MOVE_KEYS", eatAction, false,
-        Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D,
-        Enum.KeyCode.Up, Enum.KeyCode.Down, Enum.KeyCode.Left, Enum.KeyCode.Right,
-        Enum.KeyCode.Space, Enum.KeyCode.LeftControl, Enum.KeyCode.LeftShift)
-    ContextActionService:BindAction("BLOCK_GAMEPAD", eatAction, false, Enum.UserInputType.Gamepad1)
-    UserInputService.MouseIconEnabled = false
-    -- lock camera
-    if workspace and workspace.CurrentCamera then
-        workspace.CurrentCamera.CameraType = Enum.CameraType.Scriptable
-    end
-end
-
-local function restoreInputs()
-    pcall(function()
-        ContextActionService:UnbindAction("BLOCK_MOVE_KEYS")
-        ContextActionService:UnbindAction("BLOCK_GAMEPAD")
-        UserInputService.MouseIconEnabled = true
-        if workspace and workspace.CurrentCamera then
-            workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
-        end
-    end)
-end
-
--- Create the styled loading UI (match screenshot)
+-- Function to create the loading UI
 local function createLoadingUI()
-    -- If already exists, return it
-    local existing = CoreGui:FindFirstChild("GaG_LoaderUI")
-    if existing then return existing end
+    -- Remove old UI if it exists
+    local existing = playerGui:FindFirstChild("GaG_LoaderUI")
+    if existing then
+        existing:Destroy()
+    end
 
+    -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "GaG_LoaderUI"
     screenGui.ResetOnSpawn = false
-    screenGui.IgnoreGuiInset = true
-    screenGui.Parent = CoreGui
+    screenGui.Parent = playerGui
 
-    -- Black blurred background
-    local bg = Instance.new("Frame", screenGui)
-    bg.Name = "BG"
-    bg.AnchorPoint = Vector2.new(0.5, 0.5)
-    bg.Position = UDim2.new(0.5, 0, 0.5, 0)
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    bg.BackgroundTransparency = 0.0
-    bg.BorderSizePixel = 0
+    -- Frame
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 400, 0, 150)
+    frame.Position = UDim2.new(0.5, -200, 0.5, -75)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
 
-    -- Center card
-    local card = Instance.new("Frame", screenGui)
-    card.Name = "Card"
-    card.AnchorPoint = Vector2.new(0.5, 0.5)
-    card.Position = UDim2.new(0.5, 0, 0.5, -20)
-    card.Size = UDim2.new(0, 520, 0, 240)
-    card.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-    card.BorderSizePixel = 0
-    card.ClipsDescendants = true
-    local cardCorner = Instance.new("UICorner", card)
-    cardCorner.CornerRadius = UDim.new(0, 14)
+    -- Corner radius
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
 
-    -- Top title
-    local title = Instance.new("TextLabel", card)
-    title.Name = "Title"
-    title.AnchorPoint = Vector2.new(0.5, 0)
-    title.Position = UDim2.new(0.5, 0, 0.08, 0)
-    title.Size = UDim2.new(0.9, 0, 0.16, 0)
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 50)
+    title.Position = UDim2.new(0, 0, 0, 0)
     title.BackgroundTransparency = 1
+    title.Text = "GaG Script Loading..."
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 28
-    title.Text = "GaG Loader"
+    title.TextSize = 24
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextScaled = false
+    title.Parent = frame
 
-    -- Subtitle
-    local subtitle = Instance.new("TextLabel", card)
-    subtitle.Name = "Subtitle"
-    subtitle.AnchorPoint = Vector2.new(0.5, 0)
-    subtitle.Position = UDim2.new(0.5, 0, 0.20, 0)
-    subtitle.Size = UDim2.new(0.9, 0, 0.12, 0)
-    subtitle.BackgroundTransparency = 1
-    subtitle.Font = Enum.Font.Gotham
-    subtitle.TextSize = 16
-    subtitle.Text = "Preparing scripts... Please wait"
-    subtitle.TextColor3 = Color3.fromRGB(190, 190, 190)
-    subtitle.TextScaled = false
+    -- Loading bar background
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(1, -40, 0, 20)
+    barBg.Position = UDim2.new(0, 20, 0, 80)
+    barBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    barBg.BorderSizePixel = 0
+    barBg.Parent = frame
+    local bgCorner = Instance.new("UICorner")
+    bgCorner.CornerRadius = UDim.new(0, 5)
+    bgCorner.Parent = barBg
 
-    -- Spinner (simple circle using an ImageLabel)
-    local spinner = Instance.new("ImageLabel", card)
-    spinner.Name = "Spinner"
-    spinner.AnchorPoint = Vector2.new(0, 0.5)
-    spinner.Position = UDim2.new(0.06, 0, 0.5, 0)
-    spinner.Size = UDim2.new(0, 80, 0, 80)
-    spinner.BackgroundTransparency = 1
-    spinner.Image = "rbxassetid://6796686448" -- generic circle image (replace if you want custom)
-    spinner.ImageTransparency = 0
-    spinner.Rotation = 0
-
-    -- Progress bar container
-    local barBack = Instance.new("Frame", card)
-    barBack.Name = "BarBack"
-    barBack.AnchorPoint = Vector2.new(0, 1)
-    barBack.Position = UDim2.new(0.06, 0, 0.92, 0)
-    barBack.Size = UDim2.new(0.88, 0, 0, 18)
-    barBack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    barBack.BorderSizePixel = 0
-    local barCorner = Instance.new("UICorner", barBack)
-    barCorner.CornerRadius = UDim.new(0, 9)
-
-    local barFill = Instance.new("Frame", barBack)
-    barFill.Name = "BarFill"
+    -- Loading bar fill
+    local barFill = Instance.new("Frame")
     barFill.Size = UDim2.new(0, 0, 1, 0)
     barFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    local fillCorner = Instance.new("UICorner", barFill)
-    fillCorner.CornerRadius = UDim.new(0, 9)
+    barFill.BorderSizePixel = 0
+    barFill.Parent = barBg
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 5)
+    fillCorner.Parent = barFill
 
-    -- Percentage text
-    local percent = Instance.new("TextLabel", card)
-    percent.Name = "Percent"
-    percent.AnchorPoint = Vector2.new(1, 1)
-    percent.Position = UDim2.new(0.94, 0, 0.85, 0)
-    percent.Size = UDim2.new(0.2, 0, 0.16, 0)
-    percent.BackgroundTransparency = 1
-    percent.Font = Enum.Font.GothamSemibold
-    percent.TextSize = 18
-    percent.Text = "0%"
-    percent.TextColor3 = Color3.fromRGB(230, 230, 230)
-    percent.TextXAlignment = Enum.TextXAlignment.Right
+    -- Tween loading animation for 20 seconds
+    local TweenService = game:GetService("TweenService")
+    local tween = TweenService:Create(
+        barFill,
+        TweenInfo.new(20, Enum.EasingStyle.Linear),
+        {Size = UDim2.new(1, 0, 1, 0)}
+    )
+    tween:Play()
 
-    -- Small note text
-    local note = Instance.new("TextLabel", card)
-    note.Name = "Note"
-    note.AnchorPoint = Vector2.new(0, 1)
-    note.Position = UDim2.new(0.06, 0, 0.85, 0)
-    note.Size = UDim2.new(0.6, 0, 0.16, 0)
-    note.BackgroundTransparency = 1
-    note.Font = Enum.Font.Gotham
-    note.TextSize = 14
-    note.Text = "Loading modules and applying settings..."
-    note.TextColor3 = Color3.fromRGB(180, 180, 180)
-    note.TextXAlignment = Enum.TextXAlignment.Left
-
-    return {
-        Gui = screenGui,
-        Card = card,
-        Spinner = spinner,
-        BarFill = barFill,
-        Percent = percent
-    }
-end
-
--- Create UI and ensure it's persistent while loading
-blockInputs()
-local ui = createLoadingUI()
-local PlayerGuiRef = PlayerGui
-
--- Recreate if deleted
-local function watchGui()
-    PlayerGuiRef.ChildRemoved:Connect(function(child)
-        if child.Name == "GaG_LoaderUI" then
-            -- If loading still active, recreate
-            if tick() - startTick < LOADING_TIME then
-                createLoadingUI()
-            end
-        end
+    -- After 20 seconds, remove loading UI and run the main script
+    tween.Completed:Connect(function()
+        screenGui:Destroy()
+        -- Your main script execution here
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Ceanimus1627/GaG-scripts/main/GaG%20updated%20scripts"))()
     end)
 end
 
--- startTick for recreate check
-local startTick = tick()
-watchGui()
-
--- Animate spinner and progress for LOADING_TIME seconds
-local startTime = tick()
-local endTime = startTime + LOADING_TIME
-
-local runConn
-runConn = RunService.RenderStepped:Connect(function(dt)
-    -- update spinner rotation
-    local curUI = CoreGui:FindFirstChild("GaG_LoaderUI")
-    if curUI then
-        local spinner = curUI:FindFirstChild("Card", true) and curUI.Card:FindFirstChild("Spinner")
-        local barFill = curUI:FindFirstChild("Card", true) and curUI.Card:FindFirstChild("BarBack") and curUI.Card.BarBack:FindFirstChild("BarFill")
-        local percentLabel = curUI:FindFirstChild("Card", true) and curUI.Card:FindFirstChild("Percent")
-        if spinner then
-            spinner.Rotation = (spinner.Rotation + 180 * dt) % 360
-        end
-        local now = tick()
-        local elapsed = math.clamp(now - startTime, 0, LOADING_TIME)
-        local pct = math.floor((elapsed / LOADING_TIME) * 100)
-        if barFill then
-            barFill.Size = UDim2.new(elapsed / LOADING_TIME, 0, 1, 0)
-        end
-        if percentLabel then
-            percentLabel.Text = tostring(pct) .. "%"
-        end
-    end
-end)
-
--- Main wait (non-blocking logic already shows progress via RenderStepped)
-while tick() < endTime do
-    -- keep recreating if removed from CoreGui
-    if not CoreGui:FindFirstChild("GaG_LoaderUI") then
-        createLoadingUI()
-    end
-    task.wait(0.2)
-end
-
--- Done loading: cleanup
-if runConn then runConn:Disconnect() end
-local finalGui = CoreGui:FindFirstChild("GaG_LoaderUI")
-if finalGui then finalGui:Destroy() end
-restoreInputs()
-
--- Short fade-out safety wait (optional)
-task.wait(0.15)
-
--- Finally: load your GaG script (with safe pcall)
-local ok, err = pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Ceanimus1627/GaG-scripts/main/GaG%20updated%20scripts"))()
-end)
-if not ok then
-    warn("[GaG Loader] Failed to load GaG script:", err)
-end
+-- Create the loading screen
+createLoadingUI()
